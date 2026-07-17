@@ -45,7 +45,7 @@ export async function embed(texts: string[]): Promise<number[][]> {
     
     // outputs is a 2D tensor [batch_size, hidden_dim]
     const embeddings = outputs.data as Float32Array;
-    const dim = outputs.dimensions[1];
+    const dim = outputs.dims[outputs.dims.length - 1];
     
     for (let j = 0; j < batch.length; j++) {
       const start = j * dim;

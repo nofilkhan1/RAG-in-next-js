@@ -53,7 +53,7 @@ async function initDB(): Promise<lancedb.Table> {
         book_id: "",
         chapter_id: "",
         chunk_index: 0,
-        vector: new Float32Array(EMBEDDING_DIM),
+        vector: Array(EMBEDDING_DIM).fill(0) as number[],
       },
     ]);
     await table.delete('id = ""');
