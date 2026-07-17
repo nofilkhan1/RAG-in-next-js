@@ -7,10 +7,18 @@ import { chunkText } from '@/lib/chunking';
 import { addChunks } from '@/lib/vectorstore';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ['application/pdf', 'text/plain'];
 
 export async function POST(request: NextRequest): Promise<NextResponse<UploadResponse | ErrorResponse>> {
   try {
+    // Check content type
+    const contentType = request.headers.get('content-type') || '';
+    if (!contentType.includes('multipart/form-data')) {
+      return NextResponse.json(
+        { error: 'Content-Type must be multipart/form-data' },
+        { status: 400 }
+      );
+    }
+
     // Parse multipart form data
     const formData = await request.formData();
     

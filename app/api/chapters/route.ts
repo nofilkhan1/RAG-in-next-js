@@ -1,8 +1,8 @@
 // Chapters API route - list indexed chapters for a book
 
 import { NextRequest, NextResponse } from 'next/server';
-import { ErrorResponse, ChapterInfo } from '@/lib/types';
-import { listChapters, getChapterInfo } from '@/lib/vectorstore';
+import { ErrorResponse } from '@/lib/types';
+import { listChapters } from '@/lib/vectorstore';
 
 export async function GET(request: NextRequest): Promise<NextResponse<{ chapters: string[] } | ErrorResponse>> {
   try {
