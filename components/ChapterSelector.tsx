@@ -9,6 +9,7 @@ interface ChapterSelectorProps {
   onSelect: (chapterId: string) => void;
   onClear: () => void;
   disabled?: boolean;
+  refreshKey?: number;
 }
 
 export default function ChapterSelector({
@@ -17,6 +18,7 @@ export default function ChapterSelector({
   onSelect,
   onClear,
   disabled,
+  refreshKey,
 }: ChapterSelectorProps) {
   const [chapters, setChapters] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function ChapterSelector({
       return;
     }
     fetchChapters();
-  }, [bookId]);
+  }, [bookId, refreshKey]);
 
   const fetchChapters = async () => {
     setLoading(true);

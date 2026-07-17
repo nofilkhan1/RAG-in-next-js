@@ -84,6 +84,29 @@ export async function addChunks(
   return records.length;
 }
 
+export async function searchBook(
+  question: string,
+  bookId: string,
+  topK: number = TOP_K
+): Promise<Array<{ text: string; chapterId: string; chunkIndex: number; score?: number }>> {
+  const tbl = await initDB();
+
+  const [questionVector] = await embed([question]);
+
+  const results = await tbl
+    .search(new Float32Array(questionVector))
+    .where(makeBookFilter(bookId))
+    .limit(topK)
+    .toArray();
+
+  return results.map((r) => ({
+    text: r.text,
+    chapterId: r.chapter_id,
+    chunkIndex: r.chunk_index,
+    score: r._distance ? 1 - r._distance : undefined,
+  }));
+}
+
 export async function queryChunks(
   question: string,
   bookId: string,

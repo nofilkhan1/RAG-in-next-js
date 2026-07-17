@@ -36,6 +36,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<AskRespon
     return NextResponse.json({
       answer,
       sourcesUsed: chunks.length,
+      sources: chunks.map(c =>
+        c.text.length > 300 ? c.text.slice(0, 300) + '...' : c.text
+      ),
     });
 
   } catch (error) {

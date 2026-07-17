@@ -88,6 +88,25 @@ export interface UploadResponse {
 export interface AskResponse {
   answer: string;
   sourcesUsed: number;
+  sources?: string[];
+}
+
+/** Search API request schema */
+export const searchSchema = z.object({
+  query: z.string().min(1, 'Query is required').max(2000),
+  bookId: z.string().min(1, 'bookId is required'),
+});
+
+export type SearchRequest = z.infer<typeof searchSchema>;
+
+/** Search API response */
+export interface SearchResponse {
+  results: Array<{
+    text: string;
+    chapterId: string;
+    chunkIndex: number;
+    score?: number;
+  }>;
 }
 
 /** Chapters API response */

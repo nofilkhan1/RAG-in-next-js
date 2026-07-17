@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chapter RAG
 
-## Getting Started
+A chapter-scoped Retrieval-Augmented Generation app built with Next.js. Upload textbook chapters (PDF/TXT), then ask grounded questions about them. Embeddings run **locally** (MiniLM via Xenova Transformers); answer generation uses **Groq's Llama 3.3 70B**.
 
-First, run the development server:
+## Architecture
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Upload: PDF/TXT → extract text → clean → chunk → embed (local MiniLM) → LanceDB
+Ask:    question → embed → vector search (filtered by bookId + chapterId) → top-k chunks → Groq Llama 3.3 70B → grounded answer
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js 18+
+- A [Groq API key](https://console.groq.com/keys)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup
 
-## Learn More
+```bash
+# 1. Install dependencies
+npm install
 
-To learn more about Next.js, take a look at the following resources:
+# 2. Set your Groq API key
+echo "GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxx" > .env.local
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 3. Start the development server
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000).
 
-## Deploy on Vercel
+## Usage
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Enter a Book ID** (e.g., `physics101`) in the sidebar
+2. **Upload a chapter** — select a PDF or TXT file, enter a Chapter ID (e.g., `chapter-1`), and click "Index Chapter"
+3. **Select the chapter** from the dropdown to load it
+4. **Ask questions** about the chapter content in the chat panel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The first request after starting the server will be slower (~5–10s) while the MiniLM embedding model loads into memory. Subsequent requests are fast.
+
+## API
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/upload` | Upload and index a chapter (multipart/form-data: file, bookId, chapterId) |
+| POST | `/api/ask` | Ask a question (JSON: question, bookId, chapterId) |
+| GET | `/api/chapters?bookId=` | List indexed chapters for a book |
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| UI | React + Tailwind CSS |
+| Embeddings | Xenova/all-MiniLM-L6-v2 (local, ONNX) |
+| Vector DB | LanceDB (embedded, file-based) |
+| LLM | Groq Llama 3.3 70B (versatile) |
+| Validation | Zod |
+| PDF parsing | pdf-parse |
+
+## Project Structure
+
+```
+app/
+├── layout.tsx          # Root layout + error boundary
+├── page.tsx            # Main UI (sidebar + chat)
+├── globals.css         # Design tokens + Tailwind
+└── api/
+    ├── upload/route.ts # POST — index a chapter
+    ├── ask/route.ts    # POST — answer a question
+    └── chapters/route.ts # GET — list chapters
+lib/
+├── types.ts            # Shared types + Zod schemas
+├── pdf.ts              # PDF text extraction
+├── chunking.ts         # Paragraph-aware text chunking
+├── embeddings.ts       # MiniLM embedding (lazy singleton)
+├── vectorstore.ts      # LanceDB operations
+└── generate.ts         # Groq prompt + answer generation
+components/
+├── UploadPanel.tsx     # File upload form
+├── ChapterSelector.tsx # Chapter dropdown
+├── ChatPanel.tsx       # Chat message list + input
+├── MessageBubble.tsx   # Single message with copy/sources
+├── EmptyState.tsx      # Initial placeholder
+├── Toast.tsx           # Global toast notifications
+└── ErrorBoundary.tsx   # Render error boundary
+```
+
+## Known Limitations
+
+- Scanned/image-only PDFs are rejected (no OCR)
+- No authentication — anyone reaching the server can upload/query
+- Text chunking uses word-count targets, not true token counting
+- Cold start loads MiniLM ONNX model into memory (~5–10s)

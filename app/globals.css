@@ -12,7 +12,8 @@
   --accent-hover: #D4B87A;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-focus: #E8C989;
-  --error: #E --overlay: rgba(11, 11, 12, 0.95);
+  --error: #E53E3E;
+  --overlay: rgba(11, 11, 12, 0.95);
 }
 
 @theme inline {

@@ -5,6 +5,8 @@ import UploadPanel from "@/components/UploadPanel";
 import ChapterSelector from "@/components/ChapterSelector";
 import ChatPanel from "@/components/ChatPanel";
 import EmptyState from "@/components/EmptyState";
+import GlobalToast, { useToast } from "@/components/Toast";
+import SearchPanel from "@/components/SearchPanel";
 import { BookOpen, Menu, X, Settings } from "lucide-react";
 
 export default function Home() {
@@ -22,6 +24,8 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { toasts, addToast, dismissToast } = useToast();
 
   const handleUpload = async (file: File, bid: string, cid: string) => {
     setUploading(true);
@@ -41,6 +45,8 @@ export default function Home() {
 
       setChapterId(cid);
       setMessages([]);
+      if (bid !== bookId) setBookId(bid);
+      setRefreshTrigger((n) => n + 1);
     } finally {
       setUploading(false);
     }
@@ -72,7 +78,7 @@ export default function Home() {
         id: crypto.randomUUID(),
         role: "assistant" as const,
         content: data.answer,
-        sources: data.sourcesUsed > 0 ? [] : undefined,
+        sources: data.sources || undefined,
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -85,6 +91,7 @@ export default function Home() {
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, errorMessage]);
+      addToast("error", err instanceof Error ? err.message : "Request failed");
     } finally {
       setIsLoading(false);
     }
@@ -149,13 +156,22 @@ export default function Home() {
               onSelect={handleChapterSelect}
               onClear={handleChapterClear}
               disabled={!bookId}
+              refreshKey={refreshTrigger}
+            />
+
+            <div className="border-t border-white/10 pt-6" />
+
+            <SearchPanel
+              bookId={bookId}
+              disabled={!bookId}
             />
 
             <div className="border-t border-white/10 pt-6" />
 
             <UploadPanel
               onUpload={handleUpload}
-              disabled={uploading || !bookId}
+              disabled={uploading}
+              initialBookId={bookId}
             />
           </div>
 
@@ -203,6 +219,7 @@ export default function Home() {
           )}
         </div>
       </main>
+      <GlobalToast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

@@ -1,20 +1,25 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 
 interface UploadPanelProps {
   onUpload: (file: File, bookId: string, chapterId: string) => Promise<void>;
   disabled?: boolean;
+  initialBookId?: string;
 }
 
-export default function UploadPanel({ onUpload, disabled }: UploadPanelProps) {
-  const [bookId, setBookId] = useState("");
+export default function UploadPanel({ onUpload, disabled, initialBookId }: UploadPanelProps) {
+  const [bookId, setBookId] = useState(initialBookId || "");
   const [chapterId, setChapterId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialBookId) setBookId(initialBookId);
+  }, [initialBookId]);
 
   const validateFile = useCallback((f: File): string | null => {
     if (f.size > 10 * 1024 * 1024) return "File must be under 10MB";
